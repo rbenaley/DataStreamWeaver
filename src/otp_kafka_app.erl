@@ -12,7 +12,7 @@
 -type state() :: {counter, integer()}.
 -spec start(application:start_type(), []) -> {ok, pid()} | {ok, pid(), state()} | {error, term()}.
 start(_StartType, _StartArgs) ->
-    riak_core:register_vnode_module(?MODULE, otp_kafka_vnode),
+%%  riak_core:register_vnode_module(?MODULE, otp_kafka_vnode),
     case application:ensure_all_started(otp_kafka) of
         {ok, _StartedApps} ->
             otp_kafka_sup:start_link();

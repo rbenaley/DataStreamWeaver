@@ -4,7 +4,10 @@
 }).
 
 -record(partition, {
-    topic :: binary(),
-    partition_id :: non_neg_integer(),
-    vnode :: pid() % 'replicas' and 'leader' ==> 'vnode' (Riak Core)
+    id        :: non_neg_integer(),
+    topic     :: binary(),
+    replicas  :: [riak_core_lite:partition_id()],
+    isr       :: [riak_core_lite:partition_id()],
+    leader    :: riak_core_lite:partition_id() | undefined,
+    vnode     :: riak_core_lite:vnode_id() | undefined
 }).

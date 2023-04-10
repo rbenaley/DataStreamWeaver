@@ -10,7 +10,9 @@
     os_mon,
     riak_core
    ]},
-  {env,[]},
+  {env,[
+    {leveldb_path, "data/leveldb"}
+  ]},
   {modules, []},
   
   {licenses, ["Apache-2.0"]},
