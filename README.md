@@ -1,1 +1,9 @@
-# otp_kafka
+otp_kafka
+=====
+
+An OTP application
+
+Build
+-----
+
+    $ rebar3 compile
