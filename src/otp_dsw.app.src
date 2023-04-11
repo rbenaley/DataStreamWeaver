@@ -1,8 +1,8 @@
-{application, otp_kafka,
+{application, otp_dsw,
  [{description, "An OTP application"},
   {vsn, "0.1.0"},
   {registered, []},
-  {mod, {otp_kafka_app, []}},
+  {mod, {otp_dsw_app, []}},
   {applications,
    [kernel,
     stdlib,
@@ -15,6 +15,6 @@
   ]},
   {modules, []},
   
-  {licenses, ["Apache-2.0"]},
+  {licenses, ["BSD 2-Clause"]},
   {links, []}
  ]}.

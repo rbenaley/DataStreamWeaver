@@ -1,7 +1,7 @@
--module(otp_kafka_partition_manager).
+-module(otp_dsw_partition_manager).
 -export([create_partition/2, get_partition/1]).
 
--include("otp_kafka_records.hrl").
+-include("otp_dsw_records.hrl").
 
 %% Creates a new partition with the specified number and replicas.
 create_partition(Topic, PartitionId) ->
@@ -12,13 +12,13 @@ create_partition(Topic, PartitionId) ->
         isr = [],
         leader = undefined
     },
-    %% Add the new partition to partition storage (RocksDB via Riak Core Lite)
-    otp_kafka_vnode:put({Topic, PartitionId}, Partition),
+    %% Add the new partition to partition storage (LevelDB via Riak Core Lite)
+    otp_dsw_vnode:put({Topic, PartitionId}, Partition),
     ok.
 
 %% Retrieves an existing partition by its id.
 get_partition({Topic, PartitionId}) ->
-    case otp_kafka_vnode:get({Topic, PartitionId}) of
+    case otp_dsw_vnode:get({Topic, PartitionId}) of
         {ok, Partition} ->
             {ok, Partition};
         not_found ->

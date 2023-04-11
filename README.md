@@ -1,7 +1,7 @@
-otp_kafka
+DataStreamWeaver
 =====
 
-An OTP application
+Distributed streaming platform for handling real-time data feeds built on Erlang/OTP.
 
 Build
 -----

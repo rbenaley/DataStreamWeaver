@@ -1,8 +1,8 @@
--module(otp_kafka_vnode).
+-module(otp_dsw_vnode).
 -behaviour(riak_core_vnode).
 
 -include_lib("riak_core_lite/include/riak_core_vnode.hrl").
--include("otp_kafka_records.hrl").
+-include("otp_dsw_records.hrl").
 
 -export([init/1, handle_command/3, handle_coverage/4, handle_exit/3,
          handle_handoff_data/2, handle_handoff_command/2, terminate/2,
@@ -17,7 +17,7 @@
 
 %% Initialize the vnode with a reference to the LevelDB database.
 init([]) ->
-    Path = case application:get_env(otp_kafka, leveldb_path) of
+    Path = case application:get_env(otp_dsw, leveldb_path) of
         {ok, P} ->
             P;
         undefined ->
@@ -26,7 +26,7 @@ init([]) ->
     {ok, Ref} = eleveldb:open(Path, []),
     {ok, #state{idx = Ref}}.
 
-%% Implement the commands for your vnode.
+%% Implement the commands for the vnode.
 handle_command({create_partition, Topic, Partition}, _Sender, State) ->
     %% Create the key for storing the partition in LevelDB
     Key = <<Topic/binary, Partition:32>>,

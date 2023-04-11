@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc otp_kafka public API
+%% @doc otp_dsw public API
 %% @end
 %%%-------------------------------------------------------------------
 
--module(otp_kafka_app).
+-module(otp_dsw_app).
 
 -behaviour(application).
 
@@ -12,17 +12,16 @@
 -type state() :: {counter, integer()}.
 -spec start(application:start_type(), []) -> {ok, pid()} | {ok, pid(), state()} | {error, term()}.
 start(_StartType, _StartArgs) ->
-%%  riak_core:register_vnode_module(?MODULE, otp_kafka_vnode),
-    case application:ensure_all_started(otp_kafka) of
+    case application:ensure_all_started(otp_dsw) of
         {ok, _StartedApps} ->
-            otp_kafka_sup:start_link();
+            otp_dsw_sup:start_link();
         {error, {App, Reason}} ->
             {error, {App, Reason}}
     end.
 
 -spec stop(any()) -> ok.
 stop(_State) ->
-    application:stop(otp_kafka),
+    application:stop(otp_dsw),
     ok.
 
 %% internal functions

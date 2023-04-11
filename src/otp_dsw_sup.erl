@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc otp_kafka top level supervisor.
+%% @doc otp_dsw top level supervisor.
 %% @end
 %%%-------------------------------------------------------------------
 
--module(otp_kafka_sup).
+-module(otp_dsw_sup).
 
 -behaviour(supervisor).
 
