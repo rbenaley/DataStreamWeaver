@@ -106,6 +106,29 @@ handle_command({delete_topic, TopicName}, _Sender, State) ->
     ),
     {reply, ok, State};
 
+%% Write a message to the specified partition
+handle_command({write_message, PartitionId, Key, Value}, _Sender, State) ->
+    %% Create a new message
+    Message = #message{
+        key = Key,
+        value = Value,
+        timestamp = erlang:system_time(millisecond),
+        partition_id = PartitionId,
+        offset = get_next_offset(PartitionId, State)
+    },
+
+    %% Write the message to LevelDB
+    ok = write_message_to_db(Message, State),
+
+    {reply, ok, State};
+
+%% Read a message from the specified partition and offset
+handle_command({read_message, PartitionId, Offset}, _Sender, State) ->
+    %% Read the message from LevelDB
+    {ok, Message} = read_message_from_db(PartitionId, Offset, State),
+
+    {reply, {ok, Message}, State};
+
 %% Handle any other commands.
 handle_command(_Other, _Sender, State) ->
     {noreply, State}.
@@ -207,3 +230,35 @@ delete_partition(PartitionId, TopicName, State) ->
     Key = <<TopicName/binary, PartitionId:32>>,
     ok = eleveldb:delete(State#state.idx, Key, []),
     ok.
+
+write_message_to_db(Message, State) ->
+    Key = <<(Message#message.partition_id):32, (Message#message.offset):64>>,
+    ok = eleveldb:put(State#state.idx, Key, term_to_binary(Message), []),
+    ok.
+
+read_message_from_db(PartitionId, Offset, State) ->
+    Key = <<PartitionId:32, Offset:64>>,
+    case eleveldb:get(State#state.idx, Key, []) of
+        {ok, BinaryMessage} ->
+            {ok, binary_to_term(BinaryMessage)};
+        not_found ->
+            {error, not_found}
+    end.
+
+get_next_offset(PartitionId, State) ->
+    %% It's possible to implement a more efficient way to get the next available offset
+    Offset = 0,
+    case read_message_from_db(PartitionId, Offset, State) of
+        {error, not_found} ->
+            Offset;
+        {ok, _Message} ->
+            find_next_offset(PartitionId, Offset, State)
+    end.
+
+find_next_offset(PartitionId, Offset, State) ->
+    case read_message_from_db(PartitionId, Offset + 1, State) of
+        {error, not_found} ->
+            Offset + 1;
+        {ok, _Message} ->
+            find_next_offset(PartitionId, Offset + 1, State)
+    end.
