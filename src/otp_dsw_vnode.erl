@@ -35,8 +35,65 @@ handle_command({create_partition, Topic, Partition}, _Sender, State) ->
     ok = eleveldb:put(State#state.idx, Key, term_to_binary([]), []),
 
     {reply, ok, State};
+
+%% Add a replica to a partition
+handle_command({add_replica, PartitionId, Replica}, _Sender, State) ->
+    {ok, Partition} = get_partition(PartitionId, State),
+    NewReplicas = lists:umerge([Replica], Partition#partition.replicas),
+    NewPartition = Partition#partition{replicas = NewReplicas},
+    put_partition(PartitionId, NewPartition, State),
+    {reply, ok, State};
+
+%% Remove a replica from a partition
+handle_command({remove_replica, PartitionId, Replica}, _Sender, State) ->
+    {ok, Partition} = get_partition(PartitionId, State),
+    NewReplicas = Partition#partition.replicas -- [Replica],
+    NewPartition = Partition#partition{replicas = NewReplicas},
+    put_partition(PartitionId, NewPartition, State),
+    {reply, ok, State};
+
+%% Set the leader for a partition
+handle_command({set_leader, PartitionId, Leader}, _Sender, State) ->
+    {ok, Partition} = get_partition(PartitionId, State),
+    NewPartition = Partition#partition{leader = Leader},
+    put_partition(PartitionId, NewPartition, State),
+    {reply, ok, State};
+
+%% Add an In-Sync Replica (ISR) to a partition
+handle_command({add_isr, PartitionId, InSyncReplica}, _Sender, State) ->
+    {ok, Partition} = get_partition(PartitionId, State),
+    NewIsr = lists:umerge([InSyncReplica], Partition#partition.isr),
+    NewPartition = Partition#partition{isr = NewIsr},
+    put_partition(PartitionId, NewPartition, State),
+    {reply, ok, State};
+
+%% Remove an In-Sync Replica (ISR) from a partition
+handle_command({remove_isr, PartitionId, InSyncReplica}, _Sender, State) ->
+    {ok, Partition} = get_partition(PartitionId, State),
+    NewIsr = Partition#partition.isr -- [InSyncReplica],
+    NewPartition = Partition#partition{isr = NewIsr},
+    put_partition(PartitionId, NewPartition, State),
+    {reply, ok, State};
+
+%% Handle any other commands
 handle_command(_Other, _Sender, State) ->
     {noreply, State}.
+
+%% Add functions for getting and updating partitions
+get_partition(PartitionId, State) ->
+    Key = <<PartitionId:32>>,
+    case eleveldb:get(State#state.idx, Key, []) of
+        {ok, Binary} ->
+            {ok, binary_to_term(Binary)};
+        not_found ->
+            {error, not_found}
+    end.
+
+put_partition(PartitionId, Partition, State) ->
+    Key = <<PartitionId:32>>,
+    Value = term_to_binary(Partition),
+    ok = eleveldb:put(State#state.idx, Key, Value, []),
+    ok.
 
 handle_coverage(_Req, _Filter, _Sender, State) ->
     {reply, not_implemented, State}.
