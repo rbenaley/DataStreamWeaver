@@ -24,4 +24,4 @@ stop(_State) ->
     application:stop(otp_dsw),
     ok.
 
-%% internal functions
+%% Internal functions

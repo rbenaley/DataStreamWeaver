@@ -179,7 +179,7 @@ handoff_starting(_Idx, State) ->
 is_empty(_State) ->
     false.
 
-%% internal functions
+%% Internal functions
 
 %% Add functions for getting and updating partitions.
 get_partition(PartitionId, State) ->

@@ -1,12 +1,17 @@
 -module(otp_dsw_client_manager).
 -behaviour(gen_server).
 
--export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2,
+-export([start/1, start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
 -record(state, {
     listen_socket :: inet:socket()
 }).
+
+%% Start the TCP server and bind it to the specified port
+start(Port) ->
+    {ok, ListenSocket} = gen_tcp:listen(Port, [{active, false}, {reuseaddr, true}, binary, {packet, 0}, {nodelay, true}]),
+    spawn(fun() -> accept_connections(ListenSocket) end).
 
 %% Start the client manager
 start_link() ->
@@ -42,3 +47,10 @@ terminate(_Reason, State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+%% Internal functions
+
+accept_connections(ListenSocket) ->
+    {ok, Socket} = gen_tcp:accept(ListenSocket),
+    {ok, _Pid} = otp_dsw_client:start_link(Socket),
+    accept_connections(ListenSocket).

@@ -33,4 +33,4 @@ stop() ->
     supervisor:terminate(?SERVER),
     supervisor:delete_childspecs([?SERVER]).
 
-%% internal functions
+%% Internal functions

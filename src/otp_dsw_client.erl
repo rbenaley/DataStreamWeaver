@@ -15,6 +15,7 @@
 -define(API_KEY_PRODUCE, 0).
 -define(API_KEY_FETCH, 1).
 -define(ERROR_OFFSET_OUT_OF_RANGE, 1).
+-define(API_KEY_API_VERSIONS, 18).
 
 %% Start the client
 start_link(Socket) ->
@@ -49,21 +50,21 @@ terminate(_Reason, State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-%% internal functions
+%% Internal functions
 
 %% Processes incoming data from clients, parses requests, and dispatches them to the appropriate request handlers
 process_data(Data, State) ->
     %% Parse the received data to determine the type of request
     Request = parse_request(Data),
 
-    %% Handle the request based on its type (producer or consumer request)
+    %% Handle the request based on its type (producer, consumer, or api_version request)
     case Request of
         {producer_request, ProduceRequest} ->
-            %% Handle producer request (e.g., write message to the specified topic and partition)
             handle_producer_request(ProduceRequest, State);
         {consumer_request, FetchRequest} ->
-            %% Handle consumer request (e.g., read message from the specified topic, partition, and offset)
             handle_consumer_request(FetchRequest, State);
+        api_version_request ->
+            handle_api_version_request(State);
         _Other ->
             %% Handle unknown or unsupported request types
             handle_unknown_request(State)
@@ -73,10 +74,12 @@ process_data(Data, State) ->
 parse_request(BinaryData) ->
     %% Decode the Kafka message
     case decode_kafka_message(BinaryData) of
-        {ok, ?API_KEY_PRODUCE, Request} ->
+        {ok, {?API_KEY_PRODUCE, Request}} ->
             {producer_request, Request};
-        {ok, ?API_KEY_FETCH, Request} ->
+        {ok, {?API_KEY_FETCH, Request}} ->
             {consumer_request, Request};
+        {ok, {?API_KEY_API_VERSIONS, _Request}} ->
+            api_version_request;
         {error, _Reason} ->
             unknown_request
     end.
@@ -127,6 +130,15 @@ encode_kafka_fetch_response(Partition, Offset, Messages, API_Key) ->
 
 send_response(Response, Socket, _State) ->
     gen_tcp:send(Socket, Response).
+
+handle_api_version_request(State) ->
+    SupportedVersions = [
+        {?API_KEY_PRODUCE, 0, 8},
+        {?API_KEY_FETCH, 0, 11}
+    ],
+    Response = kafka_protocol:encode_api_versions_response(SupportedVersions),
+    gen_tcp:send(State#state.socket, Response),
+    {noreply, State}.
 
 %% Handles unknown requests by returning an appropriate error response to the client
 handle_unknown_request(State) ->
